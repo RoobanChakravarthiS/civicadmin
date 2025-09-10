@@ -1,7 +1,7 @@
 // src/components/inventory/InventoryTable.jsx
 import React from "react";
 const InventoryTable = ({ inventory }) => {
-  const API_BASE_URL = "http://172.20.101.50:5000";
+  const API_BASE_URL = "http://10.123.70.45:5000";
   const getStockStatus = (availableCount) => {
     if (availableCount === 0) {
       return {

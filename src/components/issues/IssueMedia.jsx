@@ -3,7 +3,7 @@ import React, { useState } from "react";
 
 const IssueMedia = ({ media }) => {
   const [selectedImage, setSelectedImage] = useState(null);
-  const BASE_URL = "http://172.20.101.50:5000";
+  const BASE_URL = "http://10.123.70.45:5000";
   if (!media || media.length === 0) {
     return (
       <div className="mb-6 bg-white rounded-lg shadow-xs dark:bg-gray-800">
