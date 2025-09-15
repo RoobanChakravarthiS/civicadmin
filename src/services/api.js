@@ -1,7 +1,7 @@
 // src/services/api.js
 import axios from "axios";
 
-const API_BASE_URL = "http://172.20.101.50:5000/api";
+const API_BASE_URL = "http://10.92.162.88:5000/api";
 
 // Helper function to get user ID from localStorage
 const getUserId = () => {
@@ -50,6 +50,45 @@ export const getInventory = async (page = 1, limit = 10, filters = {}) => {
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.error || "Failed to fetch inventory");
+  }
+};
+// Flagged Issues API functions
+export const getFlaggedIssues = async (page = 1, limit = 10, filters = {}) => {
+  try {
+    const headers = createHeaders();
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      
+    });
+
+    const response = await axios.get(
+      `${API_BASE_URL}/admin/issues/flagged?${params}`,
+      {
+        headers,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch flagged issues"
+    );
+  }
+};
+
+export const reviewFlaggedIssue = async (issueId, action) => {
+  try {
+    const headers = createHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/issues/${issueId}/review`,
+      { action },
+      { headers }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Failed to review flagged issue"
+    );
   }
 };
 
@@ -286,20 +325,20 @@ export const getIssueById = async (issueId) => {
 };
 
 // Get flagged issues
-export const getFlaggedIssues = async (page = 1, limit = 10) => {
-  try {
-    const headers = createHeaders();
-    const response = await axios.get(
-      `${API_BASE_URL}/admin/issues/flagged?page=${page}&limit=${limit}`,
-      { headers }
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(
-      error.response?.data?.error || "Failed to fetch flagged issues"
-    );
-  }
-};
+// export const getFlaggedIssues = async (page = 1, limit = 10) => {
+//   try {
+//     const headers = createHeaders();
+//     const response = await axios.get(
+//       `${API_BASE_URL}/admin/issues/flagged?page=${page}&limit=${limit}`,
+//       { headers }
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw new Error(
+//       error.response?.data?.error || "Failed to fetch flagged issues"
+//     );
+//   }
+// };
 
 // Get pending approvals
 export const getPendingApprovals = async (page = 1, limit = 10) => {
@@ -318,19 +357,19 @@ export const getPendingApprovals = async (page = 1, limit = 10) => {
 };
 
 // Review flagged issue
-export const reviewFlaggedIssue = async (issueId, action) => {
-  try {
-    const headers = createHeaders();
-    const response = await axios.post(
-      `${API_BASE_URL}/admin/issues/${issueId}/review`,
-      { action },
-      { headers }
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.error || "Failed to review issue");
-  }
-};
+// export const reviewFlaggedIssue = async (issueId, action) => {
+//   try {
+//     const headers = createHeaders();
+//     const response = await axios.post(
+//       `${API_BASE_URL}/admin/issues/${issueId}/review`,
+//       { action },
+//       { headers }
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw new Error(error.response?.data?.error || "Failed to review issue");
+//   }
+// };
 
 // Approve expense
 export const approveExpense = async (expenseId) => {
@@ -392,6 +431,104 @@ export const rejectExtension = async (extensionId, reason) => {
   } catch (error) {
     throw new Error(
       error.response?.data?.error || "Failed to reject extension"
+    );
+  }
+};
+
+export const getNotifications = async (
+  unreadOnly = false,
+  page = 1,
+  limit = 10
+) => {
+  try {
+    const headers = createHeaders();
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    if (unreadOnly) {
+      params.append("unreadOnly", "true");
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/notifications?${params}`,
+      {
+        headers,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch notifications"
+    );
+  }
+};
+
+// Get unread notifications count
+export const getUnreadCount = async () => {
+  try {
+    const headers = createHeaders();
+    const response = await axios.get(
+      `${API_BASE_URL}/notifications?unreadOnly=true&limit=1`,
+      {
+        headers,
+      }
+    );
+    return response.data.unreadCount;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch unread count"
+    );
+  }
+};
+
+// Mark notification as read
+export const markAsRead = async (notificationId) => {
+  try {
+    const headers = createHeaders();
+    const response = await axios.patch(
+      `${API_BASE_URL}/notifications/${notificationId}/read`,
+      {},
+      { headers }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Failed to mark notification as read"
+    );
+  }
+};
+
+// Mark all notifications as read
+export const markAllAsRead = async () => {
+  try {
+    const headers = createHeaders();
+    const response = await axios.patch(
+      `${API_BASE_URL}/notifications/read-all`,
+      {},
+      { headers }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Failed to mark all notifications as read"
+    );
+  }
+};
+
+// Delete notification
+export const deleteNotification = async (notificationId) => {
+  try {
+    const headers = createHeaders();
+    const response = await axios.delete(
+      `${API_BASE_URL}/notifications/${notificationId}`,
+      { headers }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Failed to delete notification"
     );
   }
 };

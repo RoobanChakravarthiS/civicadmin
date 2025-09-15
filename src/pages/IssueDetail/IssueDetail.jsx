@@ -214,7 +214,7 @@ const IssueDetail = () => {
                     Assigned Officer
                   </p>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    {assignedOfficer ? assignedOfficer.fullName : "Unassigned"}
+                    {issue ? issue.assignedOfficerId.fullName : "Unassigned"}
                   </p>
                 </div>
               </div>

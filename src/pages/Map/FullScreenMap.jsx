@@ -631,11 +631,11 @@ const FullScreenMap = () => {
             <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
               Coimbatore Civic Issues Map
             </h2>
-            {usingDummyData && (
+            {/* {usingDummyData && (
               <span className="ml-3 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
                 Demo Data
               </span>
-            )}
+            )} */}
           </div>
 
           <div className="flex flex-wrap gap-2">

@@ -205,11 +205,11 @@ const Dashboard = () => {
         <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
           Dashboard
         </h2>
-        {usingDummyData && (
+        {/* {usingDummyData && (
           <div className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
             Showing enhanced demo data
           </div>
-        )}
+        )} */}
       </div>
       
       {/* Stats Grid */}

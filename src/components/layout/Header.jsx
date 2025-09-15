@@ -9,17 +9,30 @@ import {
   QuestionMarkCircleIcon,
   ChevronDownIcon,
   XMarkIcon,
-  Bars3Icon
+  Bars3Icon,
+  CheckIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
+import {
+  getNotifications,
+  getUnreadCount,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification
+} from '../../services/api';
 
 const Header = ({ onMenuToggle }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationsMenuOpen, setIsNotificationsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const profileRef = useRef(null);
   const notificationsRef = useRef(null);
 
-  // Get user data from localStorage instead of AuthContext
+  // Get user data from localStorage
   const userData = JSON.parse(localStorage.getItem('userData') || '{}');
   const user = userData || {
     fullName: 'Admin User',
@@ -41,52 +54,116 @@ const Header = ({ onMenuToggle }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Fetch notifications when menu opens
+  useEffect(() => {
+    if (isNotificationsMenuOpen) {
+      fetchNotifications();
+    }
+  }, [isNotificationsMenuOpen]);
+
+  // Fetch initial unread count
+  useEffect(() => {
+    fetchUnreadCount();
+  }, []);
+
+  const fetchNotifications = async (unreadOnly = false) => {
+    setIsLoading(true);
+    try {
+      const data = await getNotifications(unreadOnly);
+      setNotifications(data.notifications);
+      setUnreadCount(data.unreadCount);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const count = await getUnreadCount();
+      setUnreadCount(count);
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+    }
+  };
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await markAsRead(notificationId);
+      // Update local state
+      setNotifications(prev => prev.map(n => 
+        n._id === notificationId ? { ...n, isRead: true } : n
+      ));
+      setUnreadCount(prev => prev - 1);
+    } catch (error) {
+      console.error('Error marking as read:', error);
+      toast.error(error.message);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+      // Update all notifications to read
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+      toast.success('All notifications marked as read');
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+      toast.error(error.message);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await deleteNotification(notificationId);
+      // Remove from local state
+      const deletedNotification = notifications.find(n => n._id === notificationId);
+      setNotifications(prev => prev.filter(n => n._id !== notificationId));
+      if (!deletedNotification?.isRead) {
+        setUnreadCount(prev => prev - 1);
+      }
+      toast.success('Notification deleted');
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast.error(error.message);
+    }
+  };
+
   const handleLogout = () => {
-    // Remove auth data from localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
-    
-    // Redirect to login page
     window.location.href = '/login';
     setIsProfileMenuOpen(false);
   };
 
-  const notifications = [
-    {
-      id: 1,
-      title: 'New Issue Reported',
-      description: 'Water logging in Ward 5',
-      time: '2 min ago',
-      type: 'issue',
-      read: false
-    },
-    {
-      id: 2,
-      title: 'SLA Extension Request',
-      description: 'Road repair in Ward 3 needs more time',
-      time: '15 min ago',
-      type: 'sla',
-      read: false
-    },
-    {
-      id: 3,
-      title: 'Inventory Request',
-      description: 'Sanitation supplies needed',
-      time: '1 hour ago',
-      type: 'inventory',
-      read: true
-    },
-    {
-      id: 4,
-      title: 'Issue Resolved',
-      description: 'Street light fixed in Ward 7',
-      time: '2 hours ago',
-      type: 'resolved',
-      read: true
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'issue':
+        return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'sla':
+        return 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'inventory':
+        return 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400';
+      case 'resolved':
+        return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+      default:
+        return 'bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400';
     }
-  ];
+  };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const formatTime = (createdAt) => {
+    const now = new Date();
+    const created = new Date(createdAt);
+    const diffInMinutes = Math.floor((now - created) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`;
+    return `${Math.floor(diffInMinutes / 1440)} days ago`;
+  };
 
   return (
     <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
@@ -143,49 +220,85 @@ const Header = ({ onMenuToggle }) => {
               </button>
 
               {isNotificationsMenuOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{unreadCount} unread</p>
+                <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{unreadCount} unread</p>
+                    </div>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center space-x-1"
+                      >
+                        <CheckIcon className="w-4 h-4" />
+                        <span>Mark all read</span>
+                      </button>
+                    )}
                   </div>
                   <div className="max-h-96 overflow-y-auto">
-                    {notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={`p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 ${
-                          !notification.read ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className={`p-2 rounded-lg ${
-                            notification.type === 'issue' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
-                            notification.type === 'sla' ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                            notification.type === 'inventory' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' :
-                            'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                          }`}>
-                            <BellIcon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 dark:text-white text-sm">
-                              {notification.title}
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm truncate">
-                              {notification.description}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {notification.time}
-                            </p>
-                          </div>
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          )}
-                        </div>
+                    {isLoading ? (
+                      <div className="p-8 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Loading notifications...</p>
                       </div>
-                    ))}
+                    ) : notifications.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <BellIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
+                      </div>
+                    ) : (
+                      notifications.map((notification) => (
+                        <div
+                          key={notification._id}
+                          className={`p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 ${
+                            !notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <div className={`p-2 rounded-lg ${getNotificationIcon(notification.type)}`}>
+                              <BellIcon className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-white text-sm">
+                                {notification.title}
+                              </p>
+                              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {formatTime(notification.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex flex-col space-y-1">
+                              {!notification.isRead && (
+                                <button
+                                  onClick={() => handleMarkAsRead(notification._id)}
+                                  className="p-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                  title="Mark as read"
+                                >
+                                  <CheckIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDeleteNotification(notification._id)}
+                                className="p-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                title="Delete notification"
+                                >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                   <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700">
-                    <button className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">
-                      View all notifications
+                    <button 
+                      onClick={() => fetchNotifications(!notifications.some(n => !n.isRead))}
+                      className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                    >
+                      {notifications.some(n => !n.isRead) ? 'Show only unread' : 'Show all notifications'}
                     </button>
                   </div>
                 </div>
