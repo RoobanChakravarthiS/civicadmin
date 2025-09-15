@@ -385,11 +385,11 @@ const Analytics = () => {
           Analytics & Reports
         </h2>
         <div className="flex items-center gap-4">
-          {usingDummyData && (
+          {/* {usingDummyData && (
             <div className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
               Showing enhanced demo data
             </div>
-          )}
+          )} */}
           <ExportButton data={analyticsData} />
         </div>
       </div>

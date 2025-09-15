@@ -1,22 +1,22 @@
 // src/components/layout/Sidebar.jsx
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  HomeModernIcon, 
-  ClipboardDocumentListIcon, 
-  UsersIcon, 
-  CubeIcon, 
-  ChartBarIcon, 
-  MapIcon, 
+import {
+  HomeModernIcon,
+  ClipboardDocumentListIcon,
+  UsersIcon,
+  CubeIcon,
+  ChartBarIcon,
+  MapIcon,
   Cog6ToothIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusCircleIcon,
   DocumentTextIcon,
   QuestionMarkCircleIcon,
-  BuildingLibraryIcon
+  BuildingLibraryIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
-
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -36,12 +36,14 @@ const Sidebar = () => {
       path: '/issues',
       icon: ClipboardDocumentListIcon,
       badge: '12+',
-      submenu: [
-        { name: 'All Issues', path: '/issues' },
-        { name: 'Reported', path: '/issues?status=reported' },
-        { name: 'In Progress', path: '/issues?status=in_progress' },
-        { name: 'Resolved', path: '/issues?status=resolved' }
-      ]
+     
+    },
+    // Added a new top-level item for Flagged Issues
+    {
+      name: 'Flagged Issues',
+      path: '/flagged-issues',
+      icon: ExclamationTriangleIcon,
+      badge: null
     },
     {
       name: 'Officers',
@@ -54,11 +56,7 @@ const Sidebar = () => {
       path: '/inventory',
       icon: CubeIcon,
       badge: '3',
-      submenu: [
-        { name: 'All Items', path: '/inventory' },
-        { name: 'Requests', path: '/inventory/requests' },
-        { name: 'Low Stock', path: '/inventory?filter=low_stock' }
-      ]
+    
     },
     {
       name: 'Analytics',
@@ -141,7 +139,7 @@ const Sidebar = () => {
             const Icon = item.icon;
             const hasSubmenu = item.submenu;
             const isItemActive = isActive(item.path) || (hasSubmenu && item.submenu.some(sub => isActive(sub.path)));
-            
+           
             return (
               <div key={item.name}>
                 <button
@@ -172,19 +170,23 @@ const Sidebar = () => {
                 {/* Submenu */}
                 {!isCollapsed && hasSubmenu && activeSubmenu === item.name && (
                   <div className="ml-8 mt-1 space-y-1">
-                    {item.submenu.map((subItem) => (
-                      <Link
-                        key={subItem.name}
-                        to={subItem.path}
-                        className={`block px-3 py-2 text-sm rounded-lg transition-colors duration-200 ${
-                          isActive(subItem.path)
-                            ? 'text-white bg-blue-600/30'
-                            : 'text-blue-200 hover:text-white hover:bg-blue-600/20'
-                        }`}
-                      >
-                        {subItem.name}
-                      </Link>
-                    ))}
+                    {item.submenu.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      return (
+                        <Link
+                          key={subItem.name}
+                          to={subItem.path}
+                          className={`flex items-center space-x-2 px-3 py-2 text-sm rounded-lg transition-colors duration-200 ${
+                            isActive(subItem.path)
+                              ? 'text-white bg-blue-600/30'
+                              : 'text-blue-200 hover:text-white hover:bg-blue-600/20'
+                          }`}
+                        >
+                          {SubIcon && <SubIcon className="w-4 h-4" />}
+                          <span>{subItem.name}</span>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>

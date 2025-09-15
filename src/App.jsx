@@ -10,6 +10,7 @@ import Officers from './pages/Officers/Officers';
 import Inventory from './pages/Inventory/Inventory';
 import Analytics from './pages/Analytics/Analytics';
 import FullScreenMap from './pages/Map/FullScreenMap';
+import FlaggedIssues from './pages/FlaggedIssues/FlaggedIssues';
 
 // Create a simple ProtectedRoute component
 const ProtectedRoute = ({ children }) => {
@@ -69,6 +70,11 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
+      <Route path="/flagged-issues" element={<ProtectedRoute>
+            <Layout>
+              <FlaggedIssues />
+            </Layout>
+          </ProtectedRoute>} />
       <Route
         path="/inventory"
         element={
